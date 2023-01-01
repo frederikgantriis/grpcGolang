@@ -6,14 +6,14 @@ import (
 	"net"
 	"os"
 
-	time "github.com/frederikgantriis/grpcGolang/chat"
+	chat "github.com/frederikgantriis/grpcGolang/chat"
 
 	"google.golang.org/grpc"
 )
 
 type Server struct {
-	time.UnimplementedChittyChatServer
-	streams []time.ChittyChat_ChatServer
+	chat.UnimplementedChittyChatServer
+	streams []chat.ChittyChat_ChatServer
 }
 
 func (s *Server) connect(newStream chat.ChittyChat_ChatServer) string {
@@ -22,13 +22,13 @@ func (s *Server) connect(newStream chat.ChittyChat_ChatServer) string {
 	nameMsg, _ := newStream.Recv()
 
 	for _, client := range s.streams {
-		client.SendMsg(&chitty_chat.Message{Username: "Server", Msg: nameMsg.GetUsername() + " has joined the chat", T: nameMsg.GetT()})
+		client.SendMsg(&chat.Message{Username: "Server", Msg: nameMsg.GetUsername() + " has joined the chat", T: nameMsg.GetT()})
 	}
 	log.Println(nameMsg.GetUsername(), "has joined the chat", "Lamport:", nameMsg.GetT())
 	return nameMsg.GetUsername()
 }
 
-func (s *Server) Chat(stream chitty_chat.ChittyChat_ChatServer) error {
+func (s *Server) Chat(stream chat.ChittyChat_ChatServer) error {
 	var user string
 	user = s.connect(stream)
 
@@ -45,12 +45,12 @@ func (s *Server) Chat(stream chitty_chat.ChittyChat_ChatServer) error {
 				remove(s.streams, stream)
 				// Notify clients
 				for _, client := range s.streams {
-					client.SendMsg(&chitty_chat.Message{Msg: user + " left the chat", T: msg.GetT()})
+					client.SendMsg(&chat.Message{Msg: user + " left the chat", T: msg.GetT()})
 				}
 				return
 			}
 			for _, client := range s.streams {
-				client.SendMsg(&chitty_chat.Message{Username: msg.GetUsername(), Msg: msg.GetMsg(), T: msg.GetT()})
+				client.SendMsg(&chat.Message{Username: msg.GetUsername(), Msg: msg.GetMsg(), T: msg.GetT()})
 			}
 		}
 	}()
@@ -69,14 +69,14 @@ func main() {
 	lis, _ := net.Listen("tcp", "localhost:"+os.Args[1])
 
 	grpcServer := grpc.NewServer()
-	chitty_chat.RegisterChittyChatServer(grpcServer, &Server{})
+	chat.RegisterChittyChatServer(grpcServer, &Server{})
 
 	log.Printf("server listening at %v", lis.Addr())
 
 	grpcServer.Serve(lis)
 }
 
-func remove(s []chitty_chat.ChittyChat_ChatServer, client chitty_chat.ChittyChat_ChatServer) []chitty_chat.ChittyChat_ChatServer {
+func remove(s []chat.ChittyChat_ChatServer, client chat.ChittyChat_ChatServer) []chat.ChittyChat_ChatServer {
 	var i int
 	for j, stream := range s {
 		if stream == client {

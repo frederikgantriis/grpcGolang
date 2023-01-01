@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	time "github.com/frederikgantriis/grpcGolang/chat"
+	chat "github.com/frederikgantriis/grpcGolang/chat"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -27,7 +27,7 @@ func main() {
 	conn, _ := grpc.Dial(os.Args[1], grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer conn.Close()
 
-	client := time.NewChittyChatClient(conn)
+	client := chat.NewChittyChatClient(conn)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
