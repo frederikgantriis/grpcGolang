@@ -1,4 +1,4 @@
-module github.com/frederikgantriis/grpcGolang.git
+module github.com/frederikgantriis/grpcGolang
 
 go 1.19
 
