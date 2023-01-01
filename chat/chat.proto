@@ -1,5 +1,6 @@
 syntax = "proto3";
 package chat;
+option go_package = "https://github.com/frederikgantriis/grpcGolang;chat";
 
 message Message {
     string body = 1;
