@@ -3,7 +3,8 @@ package main
 import (
 	"log"
 	"net"
-	//"google.golang.org/grpc"
+
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -17,5 +18,4 @@ func main() {
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve gRPC server over port 9000: %v", err)
 	}
-
 }
