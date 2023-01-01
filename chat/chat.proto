@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = "https://github.com/frederikgantriis/grpcGolang.git;chat";
+
+package chitty_chat;
+
+service ChittyChat
+{
+  rpc Chat(stream Message) returns (stream Message);
+}
+
+message Message {
+  string username = 1;
+  string msg = 2;
+  int32 T = 3;
+}

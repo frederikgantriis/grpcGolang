@@ -1,45 +1,84 @@
 package main
 
 import (
+	"bufio"
 	"context"
-	"fmt"
+	"io"
 	"log"
+	"os"
 
-	t "time"
-
-	"github.com/frederikgantriis/grpcGolang/time"
+	time "github.com/frederikgantriis/grpcGolang/chat"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
+var T int32
+
 func main() {
-	// Creat a virtual RPC Client Connection on port  9080 WithInsecure (because  of http)
-	var conn *grpc.ClientConn
-	conn, err := grpc.Dial(":9080", grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Could not connect: %s", err)
+	if len(os.Args) != 3 {
+		log.Printf("Please run the client with an URL and a username")
+		return
 	}
 
-	// Defer means: When this function returns, call this method (meaing, one main is done, close connection)
+	T = 0
+
+	waitc := make(chan struct{})
+	conn, _ := grpc.Dial(os.Args[1], grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer conn.Close()
 
-	//  Create new Client from generated gRPC code from proto
-	c := time.NewGetCurrentTimeClient(conn)
+	client := time.NewChittyChatClient(conn)
 
-	for {
-		SendGetTimeRequest(c)
-		t.Sleep(5 * t.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	//Joining the chat
+	stream, _ := client.Chat(ctx)
+	T++
+	stream.Send(&chat.Message{Username: os.Args[2], T: T})
+
+	//Recieve messages
+	go func() {
+		for {
+			in, err := stream.Recv()
+			if err == io.EOF {
+				close(waitc)
+				return
+			}
+			if err != nil {
+				log.Fatalf("Failed to receive a note : %v", err)
+			}
+			// Update timestamp
+			T = Max(T, in.GetT()) + 1
+			// Log message
+			log.Println(in.Username+": "+in.Msg, "Lamport:", T)
+		}
+	}()
+
+	// Send messages
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		msg := scanner.Text()
+		if len(msg) > 128 {
+			log.Println("Messages can be at most 128 characters long")
+			continue
+		}
+		T++
+		err := stream.Send(&chat.Message{Username: os.Args[2], Msg: msg, T: T})
+
+		if err != nil {
+			panic(err)
+		}
+
 	}
+
+	<-waitc
 }
 
-func SendGetTimeRequest(c time.GetCurrentTimeClient) {
-	// Between the curly brackets are nothing, because the .proto file expects no input.
-	message := time.GetTimeRequest{}
-
-	response, err := c.GetTime(context.Background(), &message)
-	if err != nil {
-		log.Fatalf("Error when calling XXX: %s", err)
+func Max(i int32, j int32) int32 {
+	if i > j {
+		return i
 	}
 
-	fmt.Printf("Response from the Server: %s \n", response.Reply)
+	return j
 }
