@@ -14,88 +14,120 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// ChatServiceClient is the client API for ChatService service.
+// ChittyChatClient is the client API for ChittyChat service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ChatServiceClient interface {
-	SayHello(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
+type ChittyChatClient interface {
+	Chat(ctx context.Context, opts ...grpc.CallOption) (ChittyChat_ChatClient, error)
 }
 
-type chatServiceClient struct {
+type chittyChatClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewChatServiceClient(cc grpc.ClientConnInterface) ChatServiceClient {
-	return &chatServiceClient{cc}
+func NewChittyChatClient(cc grpc.ClientConnInterface) ChittyChatClient {
+	return &chittyChatClient{cc}
 }
 
-func (c *chatServiceClient) SayHello(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error) {
-	out := new(Message)
-	err := c.cc.Invoke(ctx, "/chat.ChatService/SayHello", in, out, opts...)
+func (c *chittyChatClient) Chat(ctx context.Context, opts ...grpc.CallOption) (ChittyChat_ChatClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ChittyChat_ServiceDesc.Streams[0], "/chitty_chat.ChittyChat/Chat", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &chittyChatChatClient{stream}
+	return x, nil
 }
 
-// ChatServiceServer is the server API for ChatService service.
-// All implementations must embed UnimplementedChatServiceServer
-// for forward compatibility
-type ChatServiceServer interface {
-	SayHello(context.Context, *Message) (*Message, error)
-	mustEmbedUnimplementedChatServiceServer()
+type ChittyChat_ChatClient interface {
+	Send(*Message) error
+	Recv() (*Message, error)
+	grpc.ClientStream
 }
 
-// UnimplementedChatServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedChatServiceServer struct {
+type chittyChatChatClient struct {
+	grpc.ClientStream
 }
 
-func (UnimplementedChatServiceServer) SayHello(context.Context, *Message) (*Message, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SayHello not implemented")
-}
-func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
-
-// UnsafeChatServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ChatServiceServer will
-// result in compilation errors.
-type UnsafeChatServiceServer interface {
-	mustEmbedUnimplementedChatServiceServer()
+func (x *chittyChatChatClient) Send(m *Message) error {
+	return x.ClientStream.SendMsg(m)
 }
 
-func RegisterChatServiceServer(s grpc.ServiceRegistrar, srv ChatServiceServer) {
-	s.RegisterService(&ChatService_ServiceDesc, srv)
-}
-
-func _ChatService_SayHello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Message)
-	if err := dec(in); err != nil {
+func (x *chittyChatChatClient) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(ChatServiceServer).SayHello(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/chat.ChatService/SayHello",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatServiceServer).SayHello(ctx, req.(*Message))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
-// ChatService_ServiceDesc is the grpc.ServiceDesc for ChatService service.
+// ChittyChatServer is the server API for ChittyChat service.
+// All implementations must embed UnimplementedChittyChatServer
+// for forward compatibility
+type ChittyChatServer interface {
+	Chat(ChittyChat_ChatServer) error
+	mustEmbedUnimplementedChittyChatServer()
+}
+
+// UnimplementedChittyChatServer must be embedded to have forward compatible implementations.
+type UnimplementedChittyChatServer struct {
+}
+
+func (UnimplementedChittyChatServer) Chat(ChittyChat_ChatServer) error {
+	return status.Errorf(codes.Unimplemented, "method Chat not implemented")
+}
+func (UnimplementedChittyChatServer) mustEmbedUnimplementedChittyChatServer() {}
+
+// UnsafeChittyChatServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ChittyChatServer will
+// result in compilation errors.
+type UnsafeChittyChatServer interface {
+	mustEmbedUnimplementedChittyChatServer()
+}
+
+func RegisterChittyChatServer(s grpc.ServiceRegistrar, srv ChittyChatServer) {
+	s.RegisterService(&ChittyChat_ServiceDesc, srv)
+}
+
+func _ChittyChat_Chat_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ChittyChatServer).Chat(&chittyChatChatServer{stream})
+}
+
+type ChittyChat_ChatServer interface {
+	Send(*Message) error
+	Recv() (*Message, error)
+	grpc.ServerStream
+}
+
+type chittyChatChatServer struct {
+	grpc.ServerStream
+}
+
+func (x *chittyChatChatServer) Send(m *Message) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *chittyChatChatServer) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// ChittyChat_ServiceDesc is the grpc.ServiceDesc for ChittyChat service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var ChatService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "chat.ChatService",
-	HandlerType: (*ChatServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
+var ChittyChat_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "chitty_chat.ChittyChat",
+	HandlerType: (*ChittyChatServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "SayHello",
-			Handler:    _ChatService_SayHello_Handler,
+			StreamName:    "Chat",
+			Handler:       _ChittyChat_Chat_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "chat/chat.proto",
 }
