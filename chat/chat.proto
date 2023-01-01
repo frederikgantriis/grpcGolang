@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "https://github.com/frederikgantriis/grpcGolang;chat";
+option go_package = "github.com/frederikgantriis/grpcGolang;chat";
 
 package chitty_chat;
 
